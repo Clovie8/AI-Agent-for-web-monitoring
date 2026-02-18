@@ -1,0 +1,5 @@
+flask
+gunicorn
+httpx
+beautifulsoup4
+schedule
