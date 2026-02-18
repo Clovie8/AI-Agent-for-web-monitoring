@@ -1,0 +1,42 @@
+name: Website Watcher
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Runs every 30 minutes
+  workflow_dispatch:        # Allows you to click "Run Now" manually
+
+permissions:
+  contents: write           # <--- CRITICAL: Allows the bot to update the memory file
+
+jobs:
+  check-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Watcher Agent
+        env:
+          # We use secrets for the sensitive webhook
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          # You can set these directly here or in secrets
+          TARGET_URL: "https://example.com/news" 
+          TARGET_SELECTOR: ".content-area" 
+        run: python agent_watcher.py
+
+      - name: Save Memory (Commit & Push)
+        run: |
+          git config user.name "Watcher Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add last_run.txt
+          # The command below commits only if 'last_run.txt' changed
+          git commit -m "Update memory: Content changed" || exit 0
+          git push
