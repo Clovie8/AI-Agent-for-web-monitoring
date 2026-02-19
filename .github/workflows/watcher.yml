@@ -28,7 +28,7 @@ jobs:
           # We use secrets for the sensitive webhook
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           # You can set these directly here or in secrets
-          TARGET_URL: "https://www.agasobanuyefilms.com/" 
+          TARGET_URL: "https://www.agasobanuyestore.com/" 
           TARGET_SELECTOR: "body" 
         run: python agent_watcher.py
 
