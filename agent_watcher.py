@@ -3,6 +3,7 @@ import hashlib
 import logging
 import httpx
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 # --- CONFIGURATION ---
 TARGET_URL = os.environ["TARGET_URL"]
@@ -14,27 +15,38 @@ MEMORY_FILE = "last_run.txt"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_website_content():
-    """Fetches and cleans the website content."""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (GitHubActions/1.0; +https://github.com/)"
-    }
-    try:
-        response = httpx.get(TARGET_URL, headers=headers, timeout=20.0)
-        response.raise_for_status()
+    """Fetches the website using a real browser to render Javascript."""
+    logging.info(f"Launching browser to check {TARGET_URL}...")
+    
+    with sync_playwright() as p:
+        # Launch an invisible Chromium browser
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
         
-        soup = BeautifulSoup(response.text, 'html.parser')
-        element = soup.select_one(TARGET_SELECTOR)
-        
-        if not element:
-            logging.warning(f"Selector '{TARGET_SELECTOR}' not found.")
-            return None
+        try:
+            # Go to the site and wait until the network is quiet (JS has loaded)
+            page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
             
-        # Get clean text to avoid false positives from HTML spacing changes
-        return element.get_text(separator=" ", strip=True)
-        
-    except Exception as e:
-        logging.error(f"Error fetching site: {e}")
-        return None
+            # Extra safety: wait for your specific selector to appear on the screen
+            page.wait_for_selector(TARGET_SELECTOR, timeout=10000)
+            
+            # Now grab the fully rendered HTML
+            html = page.content()
+            
+            soup = BeautifulSoup(html, 'html.parser')
+            element = soup.select_one(TARGET_SELECTOR)
+            
+            if not element:
+                logging.warning(f"Selector '{TARGET_SELECTOR}' not found after JS loaded.")
+                return None
+                
+            return element.get_text(separator=" ", strip=True)
+            
+        except Exception as e:
+            logging.error(f"Error fetching site: {e}")
+            return None
+        finally:
+            browser.close()
 
 def notify_discord(new_text):
     """Sends the alert to Discord."""
@@ -45,20 +57,19 @@ def notify_discord(new_text):
         "embeds": [{
             "title": "🚨 New Content Detected!",
             "description": f"Change detected at **{TARGET_URL}**",
-            "color": 5763719, # Green
+            "color": 5763719,
             "fields": [
                 {
                     "name": "Preview",
                     "value": f"```\n{new_text[:250]}...\n```"
                 }
             ],
-            "footer": {"text": "GitHub Watcher Agent"}
+            "footer": {"text": "GitHub Watcher Agent (JS Enabled)"}
         }]
     }
     httpx.post(DISCORD_WEBHOOK, json=payload)
 
 def main():
-    # 1. Read the previous state (Memory)
     if os.path.exists(MEMORY_FILE):
         with open(MEMORY_FILE, "r") as f:
             last_hash = f.read().strip()
@@ -66,16 +77,13 @@ def main():
         last_hash = ""
         logging.info("No memory file found. Creating baseline.")
 
-    # 2. Fetch current state
     content = get_website_content()
     if not content:
-        return # Exit if site is down
+        return 
 
     current_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
 
-    # 3. Compare
     if last_hash == "":
-        # First run ever - just save the hash, don't spam
         logging.info("First run. Saving baseline.")
         with open(MEMORY_FILE, "w") as f:
             f.write(current_hash)
@@ -84,7 +92,6 @@ def main():
         logging.info("CHANGE DETECTED! Sending notification...")
         notify_discord(content)
         
-        # Save the new hash to memory
         with open(MEMORY_FILE, "w") as f:
             f.write(current_hash)
             
