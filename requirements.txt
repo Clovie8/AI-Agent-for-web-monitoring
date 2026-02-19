@@ -1,7 +1,6 @@
 playwright
 beautifulsoup4
 httpx
-playwright-stealth<2.0.0
+playwright-stealth
 tenacity
 google-generativeai
-setuptools
