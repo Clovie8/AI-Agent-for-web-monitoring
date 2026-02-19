@@ -6,9 +6,9 @@ import json
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from playwright_stealth import Stealth # <-- The new V2 Import
+from playwright_stealth import Stealth 
 from tenacity import retry, stop_after_attempt, wait_fixed
-import google.generativeai as genai
+from google import genai # <-- The brand new import
 
 # --- 1. CONFIGURATION ---
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
@@ -19,15 +19,19 @@ IMAGE_FILE = "screenshot.png"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# --- 2. AI BRAIN ---
+# --- 2. AI BRAIN (Updated for the new google-genai library) ---
 def summarize_with_ai(raw_text):
     if not GEMINI_API_KEY:
         return f"*(AI Disabled)*\n\n{raw_text[:200]}..."
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # The new V2 connection method
+        client = genai.Client(api_key=GEMINI_API_KEY)
         prompt = f"Summarize these website updates in 1-2 exciting sentences for Discord. Use bullets if multiple items.\n\nRaw text:\n{raw_text[:2000]}"
-        response = model.generate_content(prompt)
+        
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt,
+        )
         return response.text.strip()
     except Exception as e:
         logging.error(f"AI Brain failed: {e}")
@@ -98,7 +102,6 @@ def main():
         context = browser.new_context(viewport={"width": 1920, "height": 1080})
         page = context.new_page()
         
-        # Apply Stealth Mode (The new V2 Syntax)
         stealth = Stealth()
         stealth.apply_stealth_sync(page)
 
