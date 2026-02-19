@@ -2,6 +2,7 @@ import os
 import hashlib
 import logging
 import httpx
+import json
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
@@ -10,34 +11,34 @@ TARGET_URL = os.environ["TARGET_URL"]
 TARGET_SELECTOR = os.environ.get("TARGET_SELECTOR", "body")
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 MEMORY_FILE = "last_run.txt"
+IMAGE_FILE = "screenshot.png"
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_website_content():
-    """Fetches the website using a real browser to render Javascript."""
+    """Fetches the website, grabs the text, and takes a picture."""
     logging.info(f"Launching browser to check {TARGET_URL}...")
     
     with sync_playwright() as p:
-        # Launch an invisible Chromium browser
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
         try:
-            # Go to the site and wait until the network is quiet (JS has loaded)
             page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
-            
-            # Extra safety: wait for your specific selector to appear on the screen
             page.wait_for_selector(TARGET_SELECTOR, timeout=10000)
             
-            # Now grab the fully rendered HTML
-            html = page.content()
+            # 1. Take a picture of the specific element and save it
+            locator = page.locator(TARGET_SELECTOR).first
+            locator.screenshot(path=IMAGE_FILE)
+            logging.info("Screenshot captured successfully.")
             
+            # 2. Grab the HTML for text comparison
+            html = page.content()
             soup = BeautifulSoup(html, 'html.parser')
             element = soup.select_one(TARGET_SELECTOR)
             
             if not element:
-                logging.warning(f"Selector '{TARGET_SELECTOR}' not found after JS loaded.")
                 return None
                 
             return element.get_text(separator=" ", strip=True)
@@ -49,25 +50,34 @@ def get_website_content():
             browser.close()
 
 def notify_discord(new_text):
-    """Sends the alert to Discord."""
+    """Sends a simple text alert WITH the picture attached."""
     if not DISCORD_WEBHOOK:
         return
         
+    # We use a special Discord format to attach a local file to an embed
     payload = {
-        "embeds": [{
-            "title": "🚨 New Content Detected!",
-            "description": f"Change detected at **{TARGET_URL}**",
-            "color": 5763719,
-            "fields": [
-                {
-                    "name": "Preview",
-                    "value": f"```\n{new_text[:250]}...\n```"
-                }
-            ],
-            "footer": {"text": "GitHub Watcher Agent (JS Enabled)"}
-        }]
+        "payload_json": json.dumps({
+            "embeds": [{
+                "title": "🚨 Website Updated!",
+                "description": f"New content was just added to **{TARGET_URL}**\n\n**Quick summary:**\n{new_text[:150]}...",
+                "color": 5763719,
+                "image": {
+                    "url": f"attachment://{IMAGE_FILE}" # Links the uploaded image here
+                },
+                "footer": {"text": "Visual Watcher Agent"}
+            }]
+        })
     }
-    httpx.post(DISCORD_WEBHOOK, json=payload)
+    
+    # Open the image we just saved and send it in the HTTP request
+    try:
+        with open(IMAGE_FILE, "rb") as f:
+            files = {"file": (IMAGE_FILE, f, "image/png")}
+            response = httpx.post(DISCORD_WEBHOOK, data=payload, files=files)
+            response.raise_for_status()
+            logging.info("Notification with image sent to Discord!")
+    except Exception as e:
+        logging.error(f"Failed to send Discord message: {e}")
 
 def main():
     if os.path.exists(MEMORY_FILE):
@@ -97,6 +107,10 @@ def main():
             
     else:
         logging.info("No changes detected.")
+        
+    # Clean up the image file so it doesn't stay in the repository
+    if os.path.exists(IMAGE_FILE):
+        os.remove(IMAGE_FILE)
 
 if __name__ == "__main__":
     main()
