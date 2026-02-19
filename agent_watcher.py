@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
+from playwright_stealth import Stealth # <-- The new V2 Import
 from tenacity import retry, stop_after_attempt, wait_fixed
 import google.generativeai as genai
 
@@ -14,7 +14,7 @@ import google.generativeai as genai
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 SITES_FILE = "sites.json"
-MEMORY_FILE = "memory.json" # Upgraded memory file
+MEMORY_FILE = "memory.json" 
 IMAGE_FILE = "screenshot.png"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -33,7 +33,7 @@ def summarize_with_ai(raw_text):
         logging.error(f"AI Brain failed: {e}")
         return f"Raw output:\n{raw_text[:200]}..."
 
-# --- 3. FETCHING ENGINE (Now accepts URL and Selector) ---
+# --- 3. FETCHING ENGINE ---
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(30))
 def get_website_content(page, url, selector):
     logging.info(f"Checking {url} ...")
@@ -81,11 +81,9 @@ def notify_discord(url, ai_summary):
 
 # --- 5. THE MAIN LOOP ---
 def main():
-    # Load sites to check
     with open(SITES_FILE, "r") as f:
         sites = json.load(f)
 
-    # Load upgraded memory dictionary
     if os.path.exists(MEMORY_FILE):
         with open(MEMORY_FILE, "r") as f:
             memory = json.load(f)
@@ -95,12 +93,14 @@ def main():
 
     memory_changed = False
 
-    # Launch browser once, then loop through sites
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1920, "height": 1080})
         page = context.new_page()
-        stealth_sync(page)
+        
+        # Apply Stealth Mode (The new V2 Syntax)
+        stealth = Stealth()
+        stealth.apply_stealth_sync(page)
 
         for site in sites:
             target_url = site["url"]
@@ -129,13 +129,11 @@ def main():
             except Exception as e:
                 logging.error(f"❌ Failed to process {target_url}: {e}")
                 
-            # Clean up picture before next loop
             if os.path.exists(IMAGE_FILE):
                 os.remove(IMAGE_FILE)
 
         browser.close()
 
-    # Save memory only if something actually changed
     if memory_changed:
         with open(MEMORY_FILE, "w") as f:
             json.dump(memory, f, indent=4)
