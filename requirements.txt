@@ -3,4 +3,4 @@ beautifulsoup4
 httpx
 playwright-stealth
 tenacity
-google-generativeai
+google-genai
