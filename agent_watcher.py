@@ -11,99 +11,62 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 import google.generativeai as genai
 
 # --- 1. CONFIGURATION ---
-TARGET_URL = os.environ["TARGET_URL"]
-TARGET_SELECTOR = os.environ.get("TARGET_SELECTOR", "body")
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-MEMORY_FILE = "last_run.txt"
+SITES_FILE = "sites.json"
+MEMORY_FILE = "memory.json" # Upgraded memory file
 IMAGE_FILE = "screenshot.png"
 
-# --- 2. LOGGING SETUP ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# --- 3. UPGRADE 1: TRUE AI BRAIN ---
+# --- 2. AI BRAIN ---
 def summarize_with_ai(raw_text):
-    """Uses AI to read the messy code and extract the actual updates."""
     if not GEMINI_API_KEY:
-        return f"*(AI Summarization Disabled - Missing API Key)*\n\n{raw_text[:200]}..."
-        
+        return f"*(AI Disabled)*\n\n{raw_text[:200]}..."
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = f"""
-        The following text was just scraped from a website update (likely a movie or streaming site). 
-        Please extract the newest additions, movies, or announcements. 
-        Write a very short, exciting 1-2 sentence summary for a Discord alert. 
-        Format it cleanly using bullet points if there are multiple items.
-        
-        Raw text:
-        {raw_text[:2000]}
-        """
+        prompt = f"Summarize these website updates in 1-2 exciting sentences for Discord. Use bullets if multiple items.\n\nRaw text:\n{raw_text[:2000]}"
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         logging.error(f"AI Brain failed: {e}")
         return f"Raw output:\n{raw_text[:200]}..."
 
-# --- 4. UPGRADE 2 & 3: STEALTH & AUTO-RETRIES ---
-# If the site fails to load, it will wait 30 seconds and try again, up to 3 times.
+# --- 3. FETCHING ENGINE (Now accepts URL and Selector) ---
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(30))
-def get_website_content():
-    """Fetches the website using a stealth browser."""
-    logging.info(f"Launching stealth browser to check {TARGET_URL}...")
+def get_website_content(page, url, selector):
+    logging.info(f"Checking {url} ...")
+    page.goto(url, wait_until="networkidle", timeout=30000)
+    page.wait_for_selector(selector, timeout=15000)
     
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        # Setting a standard viewport to ensure mobile/desktop sites render properly
-        context = browser.new_context(viewport={"width": 1920, "height": 1080})
-        page = context.new_page()
+    locator = page.locator(selector).first
+    locator.screenshot(path=IMAGE_FILE)
+    
+    html = page.content()
+    soup = BeautifulSoup(html, 'html.parser')
+    element = soup.select_one(selector)
+    
+    if not element:
+        raise Exception(f"Selector '{selector}' not found.")
         
-        # Apply Stealth Mode to bypass Cloudflare/Bot-protection
-        stealth_sync(page)
-        
-        try:
-            page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
-            page.wait_for_selector(TARGET_SELECTOR, timeout=15000)
-            
-            # Take screenshot of the target area
-            locator = page.locator(TARGET_SELECTOR).first
-            locator.screenshot(path=IMAGE_FILE)
-            logging.info("📸 Stealth screenshot captured.")
-            
-            # Grab HTML
-            html = page.content()
-            soup = BeautifulSoup(html, 'html.parser')
-            element = soup.select_one(TARGET_SELECTOR)
-            
-            if not element:
-                raise Exception(f"Selector '{TARGET_SELECTOR}' not found on page.")
-                
-            return element.get_text(separator=" ", strip=True)
-            
-        finally:
-            browser.close()
+    return element.get_text(separator=" ", strip=True)
 
-# --- 5. UPGRADE 4: PREMIUM DISCORD EMBEDS ---
-def notify_discord(ai_summary):
-    """Sends a professional, timestamped alert with the AI summary and image."""
+# --- 4. DISCORD NOTIFIER ---
+def notify_discord(url, ai_summary):
     if not DISCORD_WEBHOOK:
         return
         
     current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    
     payload = {
         "payload_json": json.dumps({
             "embeds": [{
                 "title": "✨ New Content Detected!",
-                "url": TARGET_URL, # Makes the title a clickable link
+                "url": url,
                 "description": f"**AI Summary:**\n{ai_summary}",
-                "color": 5763719, # Green
-                "image": {
-                    "url": f"attachment://{IMAGE_FILE}"
-                },
-                "footer": {
-                    "text": f"Agent Watcher Pro • {current_time}"
-                }
+                "color": 5763719,
+                "image": {"url": f"attachment://{IMAGE_FILE}"},
+                "footer": {"text": f"Multi-Agent Pro • {current_time}"}
             }]
         })
     }
@@ -111,49 +74,71 @@ def notify_discord(ai_summary):
     try:
         with open(IMAGE_FILE, "rb") as f:
             files = {"file": (IMAGE_FILE, f, "image/png")}
-            response = httpx.post(DISCORD_WEBHOOK, data=payload, files=files)
-            response.raise_for_status()
-            logging.info("🚀 Premium notification sent to Discord!")
+            httpx.post(DISCORD_WEBHOOK, data=payload, files=files)
+            logging.info(f"🚀 Alert sent for {url}!")
     except Exception as e:
         logging.error(f"Failed to send Discord message: {e}")
 
-# --- 6. CORE LOGIC ---
+# --- 5. THE MAIN LOOP ---
 def main():
+    # Load sites to check
+    with open(SITES_FILE, "r") as f:
+        sites = json.load(f)
+
+    # Load upgraded memory dictionary
     if os.path.exists(MEMORY_FILE):
         with open(MEMORY_FILE, "r") as f:
-            last_hash = f.read().strip()
+            memory = json.load(f)
     else:
-        last_hash = ""
-        logging.info("Creating initial baseline memory.")
+        memory = {}
+        logging.info("Creating initial multi-site memory.")
 
-    try:
-        content = get_website_content()
-    except Exception as e:
-        logging.error(f"Bot failed after all retries: {e}")
-        return
+    memory_changed = False
 
-    current_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+    # Launch browser once, then loop through sites
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(viewport={"width": 1920, "height": 1080})
+        page = context.new_page()
+        stealth_sync(page)
 
-    if last_hash == "":
-        logging.info("First run complete. Saving baseline.")
-        with open(MEMORY_FILE, "w") as f:
-            f.write(current_hash)
+        for site in sites:
+            target_url = site["url"]
+            target_selector = site["selector"]
             
-    elif current_hash != last_hash:
-        logging.info("🚨 CHANGE DETECTED! Waking up AI Brain...")
-        
-        # Pass the messy text to Gemini to clean it up
-        ai_summary = summarize_with_ai(content)
-        notify_discord(ai_summary)
-        
+            try:
+                content = get_website_content(page, target_url, target_selector)
+                current_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+                last_hash = memory.get(target_url, "")
+
+                if last_hash == "":
+                    logging.info(f"First run for {target_url}. Saving baseline.")
+                    memory[target_url] = current_hash
+                    memory_changed = True
+                    
+                elif current_hash != last_hash:
+                    logging.info(f"🚨 CHANGE DETECTED on {target_url}! Waking AI...")
+                    ai_summary = summarize_with_ai(content)
+                    notify_discord(target_url, ai_summary)
+                    
+                    memory[target_url] = current_hash
+                    memory_changed = True
+                else:
+                    logging.info(f"zzz No changes for {target_url}.")
+                    
+            except Exception as e:
+                logging.error(f"❌ Failed to process {target_url}: {e}")
+                
+            # Clean up picture before next loop
+            if os.path.exists(IMAGE_FILE):
+                os.remove(IMAGE_FILE)
+
+        browser.close()
+
+    # Save memory only if something actually changed
+    if memory_changed:
         with open(MEMORY_FILE, "w") as f:
-            f.write(current_hash)
-            
-    else:
-        logging.info("zzz No changes detected.")
-        
-    if os.path.exists(IMAGE_FILE):
-        os.remove(IMAGE_FILE)
+            json.dump(memory, f, indent=4)
 
 if __name__ == "__main__":
     main()
