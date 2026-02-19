@@ -28,7 +28,7 @@ jobs:
       - name: Run Watcher Agent
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          TARGET_URL: "https://www.theonemovies.com/"
+          TARGET_URL: "https://www.rebamovie.com/"
           TARGET_SELECTOR: "body"
         run: python agent_watcher.py
 
