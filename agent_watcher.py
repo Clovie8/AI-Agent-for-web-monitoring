@@ -45,6 +45,14 @@ def get_website_content(page, url, selector):
     page.wait_for_selector(selector, timeout=15000)
     
     locator = page.locator(selector).first
+    
+    # --- NEW: FIX FOR BLACK IMAGES ---
+    # 1. Scroll the movie card into view to trigger Lazy Loading
+    locator.scroll_into_view_if_needed()
+    # 2. Wait 2 seconds for the poster to actually download
+    page.wait_for_timeout(2000) 
+    # ---------------------------------
+    
     locator.screenshot(path=IMAGE_FILE)
     
     html = page.content()
