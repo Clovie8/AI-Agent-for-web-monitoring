@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://www.agasobanuyestore.com/",
+    "selector": ".widget-content"
+  },
+  {
+    "url": "https://www.rebamovie.com/",
+    "selector": "body" 
+  },
+  {
+    "url": "https://www.agasobanuyefilms.com/",
+    "selector": ".carousel-item"
+  }
+]
