@@ -28,8 +28,9 @@ jobs:
       - name: Run Watcher Agent
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          TARGET_URL: "https://www.agasobanuyefilms.com/"
-          TARGET_SELECTOR: ".carousel-item"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_URL: "https://www.agasobanuyestore.com/"
+          TARGET_SELECTOR: ".widget-content"
         run: python agent_watcher.py
 
       - name: Save Memory (Commit & Push)
