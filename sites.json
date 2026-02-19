@@ -1,9 +1,5 @@
 [
   {
-    "url": "https://www.agasobanuyestore.com/",
-    "selector": ".widget-content"
-  },
-  {
     "url": "https://www.rebamovie.com/",
     "selector": "[data-testid^='movie-card-']" 
   },
