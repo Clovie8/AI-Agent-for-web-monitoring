@@ -3,12 +3,13 @@ import hashlib
 import logging
 import httpx
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth 
 from tenacity import retry, stop_after_attempt, wait_fixed
-from google import genai # <-- The brand new import
+from google import genai 
 
 # --- 1. CONFIGURATION ---
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
@@ -19,14 +20,25 @@ IMAGE_FILE = "screenshot.png"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# --- 2. AI BRAIN (Updated for the new google-genai library) ---
+# --- 2. AI BRAIN ---
 def summarize_with_ai(raw_text):
     if not GEMINI_API_KEY:
         return f"*(AI Disabled)*\n\n{raw_text[:200]}..."
     try:
-        # The new V2 connection method
         client = genai.Client(api_key=GEMINI_API_KEY)
-        prompt = f"Summarize these website updates in 1-2 exciting sentences for Discord. Use bullets if multiple items.\n\nRaw text:\n{raw_text[:2000]}"
+        
+        # --- NEW: UPGRADED PROMPT FOR RATINGS & GENRES ---
+        prompt = f"""
+        You are a movie and TV show expert. Based on the scraped website text below, identify the main movie or TV show added.
+        Write a 1-2 sentence exciting announcement for a Discord alert.
+        Then, using the text provided OR your own vast movie knowledge base, add a clean bulleted list below the summary containing:
+        - ⭐️ Estimated TMDB/IMDb Rating
+        - 📅 Release Year
+        - 🎭 Genres
+
+        Raw text:
+        {raw_text[:2000]}
+        """
         
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -41,34 +53,24 @@ def summarize_with_ai(raw_text):
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(30))
 def get_website_content(page, url, selector):
     logging.info(f"Checking {url} ...")
-    page.goto(url, wait_until="networkidle", timeout=30000)
-
-    # --- NEW: POPUP ASSASSIN (UPGRADED) ---
+    
+    # Using domcontentloaded to avoid endless loading spinners
+    page.goto(url, wait_until="domcontentloaded", timeout=30000)
+    
     try:
-        # Step 1: Click the radio button for the language
         page.get_by_text("Kinyarwanda", exact=False).first.click(timeout=3000)
-        page.wait_for_timeout(500) # Wait half a second for the button to register
-        
-        # Step 2: Click the Continue button
+        page.wait_for_timeout(500) 
         page.get_by_text("Komeza", exact=False).first.click(timeout=3000)
-        page.wait_for_timeout(1000)  # Wait 1 second for the dark overlay to fade
-        
+        page.wait_for_timeout(1000)  
         logging.info("Target neutralized: Selected Kinyarwanda and dismissed the popup.")
     except Exception:
-        # If the popup doesn't exist today, just quietly move on
         pass
-    # --------------------------------------
-
-    page.wait_for_selector(selector, timeout=15000)
     
+    page.wait_for_selector(selector, timeout=15000)
     locator = page.locator(selector).first
     
-    # --- NEW: FIX FOR BLACK IMAGES ---
-    # 1. Scroll the movie card into view to trigger Lazy Loading
     locator.scroll_into_view_if_needed()
-    # 2. Wait 2 seconds for the poster to actually download
     page.wait_for_timeout(2000) 
-    # ---------------------------------
     
     locator.screenshot(path=IMAGE_FILE)
     
@@ -86,16 +88,23 @@ def notify_discord(url, ai_summary):
     if not DISCORD_WEBHOOK:
         return
         
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    # --- NEW: CAT TIMEZONE & DOMAIN PARSING ---
+    # CAT is UTC +2 hours
+    cat_tz = timezone(timedelta(hours=2))
+    current_time = datetime.now(cat_tz).strftime("%Y-%m-%d %I:%M %p CAT")
+    
+    # Clean up the URL to just the website name (e.g., rebamovie.com)
+    domain_name = urlparse(url).netloc.replace("www.", "")
+    
     payload = {
         "payload_json": json.dumps({
             "embeds": [{
-                "title": "✨ New Content Detected!",
+                "title": f"✨ New Content on {domain_name}!",
                 "url": url,
-                "description": f"**AI Summary:**\n{ai_summary}",
+                "description": f"{ai_summary}",
                 "color": 5763719,
                 "image": {"url": f"attachment://{IMAGE_FILE}"},
-                "footer": {"text": f"Multi-Agent Pro • {current_time}"}
+                "footer": {"text": f"Agent Watcher Pro • {current_time}"}
             }]
         })
     }
