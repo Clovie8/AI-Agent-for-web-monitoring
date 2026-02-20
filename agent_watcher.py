@@ -42,6 +42,23 @@ def summarize_with_ai(raw_text):
 def get_website_content(page, url, selector):
     logging.info(f"Checking {url} ...")
     page.goto(url, wait_until="networkidle", timeout=30000)
+
+    # --- NEW: POPUP ASSASSIN (UPGRADED) ---
+    try:
+        # Step 1: Click the radio button for the language
+        page.get_by_text("Kinyarwanda", exact=False).first.click(timeout=3000)
+        page.wait_for_timeout(500) # Wait half a second for the button to register
+        
+        # Step 2: Click the Continue button
+        page.get_by_text("Continue", exact=False).first.click(timeout=3000)
+        page.wait_for_timeout(1000)  # Wait 1 second for the dark overlay to fade
+        
+        logging.info("Target neutralized: Selected Kinyarwanda and dismissed the popup.")
+    except Exception:
+        # If the popup doesn't exist today, just quietly move on
+        pass
+    # --------------------------------------
+
     page.wait_for_selector(selector, timeout=15000)
     
     locator = page.locator(selector).first
