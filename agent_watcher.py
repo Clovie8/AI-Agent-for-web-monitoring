@@ -29,7 +29,7 @@ def summarize_with_ai(raw_text):
         prompt = f"Summarize these website updates in 1-2 exciting sentences for Discord. Use bullets if multiple items.\n\nRaw text:\n{raw_text[:2000]}"
         
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
         )
         return response.text.strip()
