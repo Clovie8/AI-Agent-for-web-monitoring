@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   check-site:
@@ -47,3 +48,11 @@ jobs:
           -X POST \
           -d '{"content": "🚨 **CRASH DETECTED:** The Watcher Bot encountered a critical error!", "embeds": [{"title": "View GitHub Logs", "description": "The automated run crashed. Click the title above to view the logs and fix the issue.", "color": 16711680, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}]}' \
           ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: 🧹 Cleanup Old Runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 3
+          keep_minimum_runs: 10
