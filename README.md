@@ -1,3 +1,5 @@
+[![Website Watcher](https://github.com/Clovie8/AI-Agent-for-web-monitoring/actions/workflows/watcher.yml/badge.svg)](https://github.com/Clovie8/AI-Agent-for-web-monitoring/actions/workflows/watcher.yml)
+
 # AI-Agent-for-web-monitoring
 Headless AI Agent for web monitoring. Detects content updates with precision selectors and syncs alerts to Discord Webhooks. 'Set and forget' architecture.
 
