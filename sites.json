@@ -14,9 +14,5 @@
   {
     "url": "https://www.cinebeta.net/reba/tvshows/",
     "selector": "article.item.tvshows"
-  },
-  {
-    "url": "https://www.agasobanuyestore.com/",
-    "selector": ".widget-content"
   }
 ]
