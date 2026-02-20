@@ -39,3 +39,11 @@ jobs:
           git commit -m "Update memory: Content changed" || exit 0
           git pull --rebase origin main
           git push
+
+      - name: Send Discord Alert on Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content": "🚨 **CRASH DETECTED:** The Watcher Bot encountered a critical error!", "embeds": [{"title": "View GitHub Logs", "description": "The automated run crashed. Click the title above to view the logs and fix the issue.", "color": 16711680, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}]}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
