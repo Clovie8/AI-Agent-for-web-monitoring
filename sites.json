@@ -1,7 +1,7 @@
 [
   {
     "url": "https://www.rebamovie.com/",
-    "selector": "[data-testid^='movie-card-']" 
+    "selector": ".grid.grid-cols-2" 
   },
   {
     "url": "https://www.agasobanuyefilms.com/",
@@ -9,6 +9,10 @@
   },
   {
     "url": "https://www.cinebeta.net/reba/movies/",
-    "selector": "article.item.movies"
+    "selector": ".items.full"
+  },
+  {
+    "url": "https://www.cinebeta.net/reba/tvshows/",
+    "selector": "#archive-content"
   }
 ]
