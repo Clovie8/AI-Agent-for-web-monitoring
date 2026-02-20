@@ -3,6 +3,7 @@ import hashlib
 import logging
 import httpx
 import json
+import time
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
@@ -170,6 +171,8 @@ def main():
                 
             if os.path.exists(IMAGE_FILE):
                 os.remove(IMAGE_FILE)
+
+            time.sleep(5)
 
         browser.close()
 
