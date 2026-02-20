@@ -172,7 +172,7 @@ def main():
             if os.path.exists(IMAGE_FILE):
                 os.remove(IMAGE_FILE)
 
-            time.sleep(5)
+            time.sleep(15)
 
         browser.close()
 
