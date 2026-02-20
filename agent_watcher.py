@@ -30,6 +30,7 @@ def summarize_with_ai(raw_text):
         # --- NEW: UPGRADED PROMPT FOR RATINGS & GENRES ---
         prompt = f"""
         You are a movie and TV show expert. Based on the scraped website text below, identify the VERY FIRST movie or TV show listed. You must assume the first title mentioned is the newest addition.
+        CRITICAL INSTRUCTION: The scraped text often includes local translator or VJ names attached directly to the title. Common Rwandan VJ names include "Rocky", "Junior Giti", "Sankara", "Gaheza", and "Yanga". You MUST identify and remove the translator's name, even if the movie has a long, multi-word title. Focus ONLY on the actual, official global title for your summary and metadata lookup.
         Write a 1-2 sentence exciting announcement for a Discord alert focusing ONLY on this newest title.
         Then, using the text provided OR your own vast movie knowledge base, add a clean bulleted list below the summary containing:
         - 🎬 Title
