@@ -50,7 +50,7 @@ def get_website_content(page, url, selector):
         page.wait_for_timeout(500) # Wait half a second for the button to register
         
         # Step 2: Click the Continue button
-        page.get_by_text("Continue", exact=False).first.click(timeout=3000)
+        page.get_by_text("Komeza", exact=False).first.click(timeout=3000)
         page.wait_for_timeout(1000)  # Wait 1 second for the dark overlay to fade
         
         logging.info("Target neutralized: Selected Kinyarwanda and dismissed the popup.")
