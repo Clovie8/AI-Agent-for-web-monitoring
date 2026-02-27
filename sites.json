@@ -17,10 +17,10 @@
   },
   {
     "url": "https://www.igiti.net/",
-    "selector": "div:text-is('Recent Movies') + div"
+    "selector": "xpath=//div[text()='Recent Movies']/following-sibling::div[1]"
   },
   {
     "url": "https://www.igiti.net/",
-    "selector": "div:text-is('Recent Series') + div"
+    "selector": "xpath=//div[text()='Recent Series']/following-sibling::div[1]"
   }
 ]
