@@ -14,5 +14,13 @@
   {
     "url": "https://www.cinebeta.net/reba/tvshows/",
     "selector": "article.item.tvshows"
+  },
+  {
+    "url": "https://www.igiti.net/",
+    "selector": "div:text-is('Recent Movies') + div"
+  },
+  {
+    "url": "https://www.igiti.net/",
+    "selector": "div:text-is('Recent Series') + div"
   }
 ]
