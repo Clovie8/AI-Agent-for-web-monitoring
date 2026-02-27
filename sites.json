@@ -17,10 +17,10 @@
   },
   {
     "url": "https://www.igiti.net/",
-    "selector": "div[class*='overflow-x-scroll'][class*='snap-x'] >> nth=0"
+    "selector": "xpath=(//div[contains(@class, 'overflow-x-scroll')])[1]"
   },
   {
     "url": "https://www.igiti.net/",
-    "selector": "div[class*='overflow-x-scroll'][class*='snap-x'] >> nth=1"
+    "selector": "xpath=(//div[contains(@class, 'overflow-x-scroll')])[2]"
   }
 ]
