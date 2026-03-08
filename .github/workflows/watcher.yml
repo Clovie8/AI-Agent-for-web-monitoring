@@ -2,7 +2,7 @@ name: Website Watcher
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 */1 * * *'
   workflow_dispatch:
 
 permissions:
