@@ -14,13 +14,5 @@
   {
     "url": "https://www.cinebeta.net/reba/tvshows/",
     "selector": "article.item.tvshows"
-  },
-  {
-    "url": "https://www.hpmovie.org/",
-    "selector": "div.post-0"
-  },
-  {
-    "url": "https://www.igiti.net/",
-    "selector": "div:has(> div.font-bold:has-text('Recent Series')) > div.overflow-x-scroll"
   }
 ]
