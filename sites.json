@@ -6,13 +6,5 @@
   {
     "url": "https://www.agasobanuyefilms.com/",
     "selector": ".carousel-item"
-  },
-  {
-    "url": "https://www.cinebeta.net/reba/movies/",
-    "selector": "article.item.movies"
-  },
-  {
-    "url": "https://www.cinebeta.net/reba/tvshows/",
-    "selector": "article.item.tvshows"
   }
 ]
