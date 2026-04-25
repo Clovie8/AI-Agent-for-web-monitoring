@@ -1,12 +1,12 @@
 [
     {
-        "url": "https://cinebeta.net/streamchat/stream/movies",
-        "selector": "#moviesGrid .card:nth-of-type(-n+4)",
+        "url": "https://igiti.net/",
+        "selector": "xpath=//div[text()='Recent Movies']/following-sibling::div/div[1]",
         "type": "Movie"
     },
     {
-        "url": "https://cinebeta.net/streamchat/stream/tv",
-        "selector": "#tvGrid .card:nth-of-type(-n+4)",
+        "url": "https://igiti.net/",
+        "selector": "xpath=//div[text()='Recent Series']/following-sibling::div/div[1]",
         "type": "Series"
     }
 ]
