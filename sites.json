@@ -1,12 +1,12 @@
 [
     {
         "url": "https://cinebeta.net/streamchat/stream/movies",
-        "selector": "#moviesGrid .card:nth-of-type(1)",
+        "selector": "#moviesGrid .card:nth-of-type(-n+4)",
         "type": "Movie"
     },
     {
         "url": "https://cinebeta.net/streamchat/stream/tv",
-        "selector": "#tvGrid .card:nth-of-type(1)",
+        "selector": "#tvGrid .card:nth-of-type(-n+4)",
         "type": "Series"
     }
 ]
