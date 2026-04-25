@@ -1,12 +1,12 @@
 [
     {
         "url": "https://igiti.net/",
-        "selector": "xpath=//div[text()='Recent Movies']/following-sibling::div/div[1]",
+        "selector": "div[role=\"region\"] + div .overflow-x-scroll > div:nth-child(1)",
         "type": "Movie"
     },
     {
         "url": "https://igiti.net/",
-        "selector": "xpath=//div[text()='Recent Series']/following-sibling::div/div[1]",
+        "selector": "div[role=\"region\"] + div + div .overflow-x-scroll > div:nth-child(1)",
         "type": "Series"
     }
 ]
