@@ -18,7 +18,7 @@
     "type": "Series"
   },
   {
-    "url": "https://igiti.net/",
+    "url": "https://WWW.igiti.net/",
     "selector": "div[role=\"region\"] + div .overflow-x-scroll > div:nth-child(1)",
     "type": "Movie"
   },
