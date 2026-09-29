@@ -1,5 +1,12 @@
 [
- 
+  {
+    "url": "https://www.rebamovie.com/",
+    "selector": "[data-testid^='movie-card-']" 
+  },
+  {
+    "url": "https://www.agasobanuyefilms.com/",
+    "selector": ".carousel-item"
+  },
   {
     "url": "https://www.cinebeta.net/streamchat/stream/movies.php",
     "selector": "#moviesGrid .card:nth-of-type(1)",
@@ -8,6 +15,16 @@
   {
     "url": "https://www.cinebeta.net/streamchat/stream/tv.php",
     "selector": "#tvGrid .card:nth-of-type(1)",
+    "type": "Series"
+  },
+  {
+    "url": "https://www.igiti.net/",
+    "selector": "div[role=\"region\"] + div .overflow-x-scroll > div:nth-child(1)",
+    "type": "Movie"
+  },
+  {
+    "url": "https://igiti.net/",
+    "selector": "div[role=\"region\"] + div + div .overflow-x-scroll > div:nth-child(1)",
     "type": "Series"
   }
 ]
