@@ -1,6 +1,11 @@
 [
   {
     "url": "https://mujyosi.store/",
+    "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/movie/'])",
+    "type": "Movie"
+},
+{
+    "url": "https://mujyosi.store/",
     "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/series/'])",
     "type": "Series"
 }
