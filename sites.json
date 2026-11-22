@@ -1,7 +1,7 @@
 [
   {
     "url": "https://mujyosi.store/",
-    "selector": "div[class*='lg:hidden'] ~ * a[href^='/series/']",
+    "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/series/'])",
     "type": "Series"
 }
 ]
