@@ -5,7 +5,7 @@
     "type": "Movie"
 },
 {
-    "url": "https://mujyosi.store/",
+    "url": "https://www.mujyosi.store/",
     "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/series/'])",
     "type": "Series"
 }
