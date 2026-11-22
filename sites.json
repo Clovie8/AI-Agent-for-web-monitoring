@@ -1,12 +1,7 @@
 [
   {
-    "url": "https://mujyosi.store/",
-    "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/movie/'])",
-    "type": "Movie"
-},
-{
-    "url": "https://www.mujyosi.store/",
-    "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/series/'])",
-    "type": "Series"
+    "url": "https://agasobanuyefilms.com/",
+    "selector": "section[aria-labelledby='r-recent'] .viewport",
+    "type": "Recent"
 }
 ]
