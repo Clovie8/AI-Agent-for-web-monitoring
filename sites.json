@@ -1,7 +1,7 @@
 [
   {
-    "url": "https://mujyosi.store/series/",
-    "selector": "div:not([class*='lg:hidden']) > a.modern-card[href^='/series/']",
+    "url": "https://mujyosi.store/",
+    "selector": "div[class*='lg:hidden'] ~ * a[href^='/series/']",
     "type": "Series"
 }
 ]
