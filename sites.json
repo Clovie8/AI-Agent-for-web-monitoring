@@ -20,16 +20,6 @@
     "type": "Series"
   },
   {
-    "url": "https://www.igiti.net/",
-    "selector": "div[role=\"region\"] + div .overflow-x-scroll > div:nth-child(1)",
-    "type": "Movie"
-  },
-  {
-    "url": "https://igiti.net/",
-    "selector": "div[role=\"region\"] + div + div .overflow-x-scroll > div:nth-child(1)",
-    "type": "Series"
-  },
-  {
     "url": "https://mujyosi.store/",
     "selector": "div[class*='lg:hidden'] ~ *:has(a[href^='/movie/'])",
     "type": "Movie"
